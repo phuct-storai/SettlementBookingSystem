@@ -5,12 +5,14 @@ using Newtonsoft.Json;
 using SettlementBookingSystem.Application.Bookings.Commands;
 using SettlementBookingSystem.Application.Bookings.Dtos;
 using System;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Policy;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace SettlementBookingSystem.Controllers
 {
@@ -42,24 +44,30 @@ namespace SettlementBookingSystem.Controllers
 
                 var bookingRequest = new CreateBookingCommand
                 {
-                    BookingTime = DateTime.Now,
+                    BookingId = "",
                     Name = command.Name,
+                    BookingTime = DateTime.Now.ToString("HH:mm:ss"),
+                    ExpiredTime = ""
+                    //BookingTime = "18:23:34"
                 };
 
                 var bookingRequestDto = System.Text.Json.JsonSerializer.Serialize(bookingRequest);
-
-                var bookingRequestDtoJson =JsonConvert.SerializeObject(bookingRequest);
-
 
                 var content = new StringContent(bookingRequestDto, Encoding.UTF8, "application/json");
 
                 var result = await client.PostAsync("/Main/get-booking", content);
 
-                //client.PostAsync(url, content);
-
-                return Ok();
+                if (result.IsSuccessStatusCode)
+                {
+                    bookingRequest.BookingId = await result.Content.ReadAsStringAsync();
+                    bookingRequest.ExpiredTime = DateTime.Parse(bookingRequest.BookingTime).AddHours(1).ToString();
+                    return Ok(bookingRequest.BookingId.ToString());
+                }
+                else
+                {
+                    return BadRequest();
+                }
             };
-            
         }
 
     }

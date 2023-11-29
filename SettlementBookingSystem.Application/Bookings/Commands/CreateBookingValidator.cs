@@ -7,7 +7,7 @@ namespace SettlementBookingSystem.Application.Bookings.Commands
         public CreateBookingValidator()
         {
             RuleFor(b => b.Name).NotEmpty();
-            RuleFor(b => b.BookingTime).Matches("[0-9]{1,2}:[0-9][0-9]");
+            RuleFor(b => b.BookingTime.ToString()).Matches("[0-9]{1,2}:[0-9][0-9]");
         }
     }
 }

@@ -7,7 +7,7 @@ namespace SettlementBookingSystem.Application.Bookings.Dtos
     {
         public BookingDto()
         {
-            BookingId = Guid.NewGuid();
+            BookingId = Guid.Empty;
         }
 
         public Guid BookingId { get; }
