@@ -1,8 +1,9 @@
-﻿using System;
+﻿using SettlementBookingSystem.Application.Bookings.Commands;
+using System;
 
 namespace SettlementBookingSystem.Application.Bookings.Dtos
 {
-    public class BookingDto
+    public class BookingDto : CreateBookingCommand
     {
         public BookingDto()
         {

@@ -15,6 +15,7 @@ namespace SettlementBookingSystem.Application.Bookings.Commands
         public Task<BookingDto> Handle(CreateBookingCommand request, CancellationToken cancellationToken)
         {
             // TODO Implement CreateBookingCommandHandler.Handle() and confirm tests are passing. See InfoTrack Global Team - Tech Test.pdf for business rules.
+            
             throw new NotImplementedException();
         }
     }
