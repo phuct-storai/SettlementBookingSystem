@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using SettlementBookingSystem.Application.Bookings.Commands;
 using SettlementBookingSystem.Application.Bookings.Dtos;
+using SettlementBookingSystem.Application.Exceptions;
+using SettlementBookingSystem.ProblemDetails;
 using System;
 using System.Net;
 using System.Net.Http;
@@ -33,11 +35,8 @@ namespace SettlementBookingSystem.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<BookingDto>> Create([FromBody] CreateBookingCommand command)
+        public async Task<ActionResult<BookingDto>> CreateAsync([FromBody] CreateBookingCommand command)
         {
-            //var result =  await _mediator.Send(command);
-            //return Ok(result);
-
             using (var client = new HttpClient())
             {
                 client.BaseAddress = new Uri(url);
@@ -46,9 +45,8 @@ namespace SettlementBookingSystem.Controllers
                 {
                     BookingId = "",
                     Name = command.Name,
-                    BookingTime = DateTime.Now.ToString("HH:mm:ss"),
-                    ExpiredTime = ""
-                    //BookingTime = "18:23:34"
+                    BookingTime = command.BookingTime,
+                    ExpiredTime = "",
                 };
 
                 var bookingRequestDto = System.Text.Json.JsonSerializer.Serialize(bookingRequest);
@@ -57,18 +55,32 @@ namespace SettlementBookingSystem.Controllers
 
                 var result = await client.PostAsync("/Main/get-booking", content);
 
-                if (result.IsSuccessStatusCode)
+                if (!result.IsSuccessStatusCode)
                 {
-                    bookingRequest.BookingId = await result.Content.ReadAsStringAsync();
-                    bookingRequest.ExpiredTime = DateTime.Parse(bookingRequest.BookingTime).AddHours(1).ToString();
-                    return Ok(bookingRequest.BookingId.ToString());
+                    throw new ConflictException("");
                 }
-                else
-                {
-                    return BadRequest();
-                }
+
+                return await GetResponseAsync(bookingRequest, result);
             };
         }
 
+        private async Task<ActionResult<BookingDto>> GetResponseAsync(CreateBookingCommand bookingRequest, HttpResponseMessage result)
+        {
+            bookingRequest.BookingId = await result.Content.ReadAsStringAsync();
+            bookingRequest.ExpiredTime = DateTime.Parse(bookingRequest.BookingTime).AddHours(1).ToString();
+            return Ok(bookingRequest.BookingId.ToString());
+        }
+
+        [HttpGet]
+        public async Task<ActionResult<bool>> GetInformationSlot()
+        {
+            using (var client = new HttpClient())
+            {
+                client.BaseAddress = new Uri(url);
+
+                var result = await client.GetAsync("/Main/get-information");
+            }
+            return Ok();
+        }
     }
 }
