@@ -10,6 +10,7 @@ using System;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Reflection.Metadata.Ecma335;
 using System.Security.Policy;
 using System.Text;
 using System.Text.Json;
@@ -41,13 +42,7 @@ namespace SettlementBookingSystem.Controllers
             {
                 client.BaseAddress = new Uri(url);
 
-                var bookingRequest = new CreateBookingCommand
-                {
-                    BookingId = "",
-                    Name = command.Name,
-                    BookingTime = command.BookingTime,
-                    ExpiredTime = "",
-                };
+                CreateBookingCommand bookingRequest = CreateBookingRequest(command);
 
                 var bookingRequestDto = System.Text.Json.JsonSerializer.Serialize(bookingRequest);
 
@@ -55,12 +50,28 @@ namespace SettlementBookingSystem.Controllers
 
                 var result = await client.PostAsync("/Main/get-booking", content);
 
-                if (!result.IsSuccessStatusCode)
+                if (result.StatusCode == HttpStatusCode.BadRequest)
                 {
-                    throw new ConflictException("");
+                    return BadRequest();
+                }
+
+                if (result.StatusCode == HttpStatusCode.Conflict)
+                {
+                    throw new ConflictException("Already exits a booking in this time range. Try again!");
                 }
 
                 return await GetResponseAsync(bookingRequest, result);
+            };
+        }
+
+        private static CreateBookingCommand CreateBookingRequest(CreateBookingCommand command)
+        {
+            return new CreateBookingCommand
+            {
+                BookingId = "",
+                Name = command.Name,
+                BookingTime = command.BookingTime,
+                ExpiredTime = "",
             };
         }
 
@@ -69,18 +80,6 @@ namespace SettlementBookingSystem.Controllers
             bookingRequest.BookingId = await result.Content.ReadAsStringAsync();
             bookingRequest.ExpiredTime = DateTime.Parse(bookingRequest.BookingTime).AddHours(1).ToString();
             return Ok(bookingRequest.BookingId.ToString());
-        }
-
-        [HttpGet]
-        public async Task<ActionResult<bool>> GetInformationSlot()
-        {
-            using (var client = new HttpClient())
-            {
-                client.BaseAddress = new Uri(url);
-
-                var result = await client.GetAsync("/Main/get-information");
-            }
-            return Ok();
         }
     }
 }
